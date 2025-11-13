@@ -46,3 +46,11 @@ amplify_outputs.json
 build
 dist
 
+# Archivos grandes
+public/imagenes.zip
+public/*.zip
+public/*.wav
+public/imagenes/**/*.pdf
+public/imagenes/**/*.docx
+public/imagenes/**/*.doc
+
