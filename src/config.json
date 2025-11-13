@@ -1,0 +1,34 @@
+{
+  "colors": {
+    "primary": "#0b1b3b",
+    "accent": "#f4c867",
+    "background": "#020317",
+    "gradient": "linear-gradient(135deg, #0b1b3b, #2b174f, #020317)"
+  },
+  "product": {
+    "name": "Caja Astrochoc – Edición Tarot",
+    "price": 9990,
+    "currency": "CLP",
+    "description": "Pirámide mágica con 3 chocolates sin azúcar ni gluten, carta de tarot al azar y nube protectora.",
+    "includes": [
+      "3 chocolates sin azúcar ni gluten",
+      "1 carta de tarot al azar",
+      "Nube protectora esponjosa",
+      "Caja piramidal con lazo café"
+    ]
+  },
+  "shipping": {
+    "estimate": "Despachos entre 2 y 5 días hábiles.",
+    "regions": "Disponible en Región Metropolitana (por ahora)."
+  },
+  "contact": {
+    "email": "hola@astrochoc.cl",
+    "instagram": "https://www.instagram.com/astro_choc/",
+    "tiktok": "https://www.tiktok.com/@astrochoc"
+  },
+  "mercadoPago": {
+    "publicKey": "MP_PUBLIC_KEY_DESDE_ENV",
+    "checkoutUrl": "https://mi-backend.com/astrochoc/create-preference"
+  }
+}
+
