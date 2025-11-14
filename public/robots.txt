@@ -1,0 +1,26 @@
+# robots.txt para Astrochoc
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://astrochoc.cl/sitemap.xml
+
+# Configuración para bots específicos
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Bloquear acceso a archivos no necesarios
+Disallow: /node_modules/
+Disallow: /server/
+Disallow: /.git/
+Disallow: /*.json$
+Disallow: /*.yml$
+Disallow: /*.md$
+
