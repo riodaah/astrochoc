@@ -2,23 +2,42 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const MusicPlayer = () => {
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(true) // Cambiado a true para autoplay
   const [isMuted, setIsMuted] = useState(false)
   const [volume, setVolume] = useState(0.3) // Volumen inicial al 30%
+  const [hasInteracted, setHasInteracted] = useState(false)
   const audioRef = useRef(null)
 
+  // Intentar reproducir automáticamente cuando el audio esté listo
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
-    // Cargar el audio
+    // Configurar el audio
     audio.volume = volume
     audio.loop = true
 
-    // Manejar cuando el audio esté listo
-    audio.addEventListener('canplaythrough', () => {
-      // No reproducir automáticamente, esperar que el usuario active
-    })
+    // Función para intentar reproducir
+    const attemptPlay = () => {
+      if (isPlaying && !isMuted) {
+        audio.play()
+          .then(() => {
+            setHasInteracted(true)
+          })
+          .catch((error) => {
+            // Si falla, esperar a que el usuario interactúe
+            console.log('Autoplay bloqueado, esperando interacción del usuario')
+            setIsPlaying(false)
+          })
+      }
+    }
+
+    // Intentar reproducir cuando el audio esté listo
+    if (audio.readyState >= 2) {
+      attemptPlay()
+    } else {
+      audio.addEventListener('canplaythrough', attemptPlay, { once: true })
+    }
 
     // Manejar errores
     audio.addEventListener('error', (e) => {
@@ -26,25 +45,52 @@ const MusicPlayer = () => {
     })
 
     return () => {
-      audio.removeEventListener('canplaythrough', () => {})
+      audio.removeEventListener('canplaythrough', attemptPlay)
       audio.removeEventListener('error', () => {})
     }
-  }, [volume])
+  }, [volume, isPlaying, isMuted])
 
-  // Controlar reproducción
+  // Controlar reproducción cuando cambia el estado
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
-    if (isPlaying && !isMuted) {
+    if (isPlaying && !isMuted && hasInteracted) {
       audio.play().catch((error) => {
-        console.log('Auto-play bloqueado, el usuario debe interactuar primero')
-        setIsPlaying(false)
+        console.error('Error al reproducir:', error)
       })
-    } else {
+    } else if (!isPlaying || isMuted) {
       audio.pause()
     }
-  }, [isPlaying, isMuted])
+  }, [isPlaying, isMuted, hasInteracted])
+
+  // Intentar reproducir en la primera interacción del usuario
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!hasInteracted && audioRef.current && isPlaying) {
+        audioRef.current.play()
+          .then(() => {
+            setHasInteracted(true)
+            setIsPlaying(true)
+          })
+          .catch((error) => {
+            console.log('Error al reproducir en primera interacción:', error)
+          })
+      }
+    }
+
+    // Escuchar varios eventos de interacción
+    const events = ['click', 'touchstart', 'keydown', 'scroll']
+    events.forEach(event => {
+      window.addEventListener(event, handleFirstInteraction, { once: true })
+    })
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleFirstInteraction)
+      })
+    }
+  }, [hasInteracted, isPlaying])
 
   // Actualizar volumen
   useEffect(() => {
