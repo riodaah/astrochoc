@@ -49,7 +49,7 @@ dist
 # Archivos grandes
 public/imagenes.zip
 public/*.zip
-public/*.wav
+# public/*.wav  # Permitir Sonido.wav para música de fondo
 public/imagenes/**/*.pdf
 public/imagenes/**/*.docx
 public/imagenes/**/*.doc

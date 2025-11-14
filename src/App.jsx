@@ -14,6 +14,7 @@ import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
 import VideoModal from './components/VideoModal'
 import PolicyModal from './components/PolicyModal'
+import MusicPlayer from './components/MusicPlayer'
 import Success from './pages/Success'
 import Failure from './pages/Failure'
 import Pending from './pages/Pending'
@@ -86,6 +87,9 @@ function App() {
         onClose={closePolicyModal}
         type={policyModalContent}
       />
+      
+      {/* Music Player */}
+      <MusicPlayer />
     </div>
   )
 }
