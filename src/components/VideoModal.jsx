@@ -65,7 +65,6 @@ const VideoModal = ({ isOpen, onClose }) => {
                   controls
                   autoPlay
                   className="w-full h-full object-contain bg-black"
-                  poster="/poster-video.jpg"
                 >
                   {/* Intenta cargar el video desde public/ */}
                   <source src="/video-unboxing.mp4" type="video/mp4" />

@@ -177,7 +177,6 @@ const Hero = ({ onVideoClick }) => {
                   muted
                   playsInline
                   className="w-full h-full object-cover rounded-3xl"
-                  poster="/box-poster.jpg"
                 >
                   <source src="/hero-box.mp4" type="video/mp4" />
                   <source src="/hero-box.webm" type="video/webm" />
