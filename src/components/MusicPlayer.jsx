@@ -7,8 +7,9 @@ const MusicPlayer = () => {
   const [volume, setVolume] = useState(0.3) // Volumen inicial al 30%
   const [hasInteracted, setHasInteracted] = useState(false)
   const audioRef = useRef(null)
+  const playAttemptedRef = useRef(false)
 
-  // Intentar reproducir automáticamente cuando el audio esté listo
+  // Configurar el audio cuando se monta el componente
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
@@ -18,39 +19,54 @@ const MusicPlayer = () => {
     audio.loop = true
 
     // Función para intentar reproducir
-    const attemptPlay = () => {
-      if (isPlaying && !isMuted) {
-        audio.play()
-          .then(() => {
-            setHasInteracted(true)
-          })
-          .catch((error) => {
-            // Si falla, esperar a que el usuario interactúe
-            console.log('Autoplay bloqueado, esperando interacción del usuario')
-            setIsPlaying(false)
-          })
+    const attemptPlay = async () => {
+      if (!audio || playAttemptedRef.current) return
+      
+      try {
+        // Intentar reproducir
+        await audio.play()
+        setHasInteracted(true)
+        playAttemptedRef.current = true
+        console.log('✅ Música iniciada automáticamente')
+      } catch (error) {
+        // Si falla (bloqueo del navegador), marcar que necesitamos interacción
+        console.log('⚠️ Autoplay bloqueado, esperando interacción del usuario')
+        playAttemptedRef.current = false
+        // No cambiar isPlaying, mantenerlo en true para que se reproduzca en la primera interacción
       }
     }
 
     // Intentar reproducir cuando el audio esté listo
     if (audio.readyState >= 2) {
+      // El audio ya está cargado
       attemptPlay()
     } else {
+      // Esperar a que el audio esté listo
       audio.addEventListener('canplaythrough', attemptPlay, { once: true })
+      audio.addEventListener('loadeddata', attemptPlay, { once: true })
     }
+
+    // También intentar después de un pequeño delay para dar tiempo a que cargue
+    const timeoutId = setTimeout(() => {
+      if (!playAttemptedRef.current) {
+        attemptPlay()
+      }
+    }, 500)
 
     // Manejar errores
     audio.addEventListener('error', (e) => {
-      console.error('Error al cargar el audio:', e)
+      console.error('❌ Error al cargar el audio:', e)
     })
 
     return () => {
+      clearTimeout(timeoutId)
       audio.removeEventListener('canplaythrough', attemptPlay)
+      audio.removeEventListener('loadeddata', attemptPlay)
       audio.removeEventListener('error', () => {})
     }
-  }, [volume, isPlaying, isMuted])
+  }, []) // Solo ejecutar una vez al montar
 
-  // Controlar reproducción cuando cambia el estado
+  // Controlar reproducción cuando cambia el estado o volumen
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
@@ -64,34 +80,6 @@ const MusicPlayer = () => {
     }
   }, [isPlaying, isMuted, hasInteracted])
 
-  // Intentar reproducir en la primera interacción del usuario
-  useEffect(() => {
-    const handleFirstInteraction = () => {
-      if (!hasInteracted && audioRef.current && isPlaying) {
-        audioRef.current.play()
-          .then(() => {
-            setHasInteracted(true)
-            setIsPlaying(true)
-          })
-          .catch((error) => {
-            console.log('Error al reproducir en primera interacción:', error)
-          })
-      }
-    }
-
-    // Escuchar varios eventos de interacción
-    const events = ['click', 'touchstart', 'keydown', 'scroll']
-    events.forEach(event => {
-      window.addEventListener(event, handleFirstInteraction, { once: true })
-    })
-
-    return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, handleFirstInteraction)
-      })
-    }
-  }, [hasInteracted, isPlaying])
-
   // Actualizar volumen
   useEffect(() => {
     const audio = audioRef.current
@@ -100,19 +88,71 @@ const MusicPlayer = () => {
     }
   }, [volume, isMuted])
 
-  const togglePlay = () => {
+  // Intentar reproducir en la primera interacción del usuario
+  useEffect(() => {
+    if (hasInteracted) return // Ya se ha interactuado
+
+    const handleFirstInteraction = () => {
+      const audio = audioRef.current
+      if (!audio || hasInteracted) return
+
+      // Intentar reproducir en la primera interacción
+      if (isPlaying && !playAttemptedRef.current) {
+        audio.play()
+          .then(() => {
+            setHasInteracted(true)
+            playAttemptedRef.current = true
+            setIsPlaying(true)
+            console.log('✅ Música iniciada después de interacción')
+          })
+          .catch((error) => {
+            console.log('Error al reproducir en primera interacción:', error)
+          })
+      }
+    }
+
+    // Escuchar varios eventos de interacción
+    const events = ['click', 'touchstart', 'keydown', 'mousedown', 'scroll']
+    events.forEach(event => {
+      window.addEventListener(event, handleFirstInteraction, { 
+        once: true,
+        passive: true 
+      })
+    })
+
+    // También intentar con el evento load de la página
+    if (document.readyState === 'complete') {
+      handleFirstInteraction()
+    } else {
+      window.addEventListener('load', handleFirstInteraction, { once: true })
+    }
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleFirstInteraction)
+      })
+      window.removeEventListener('load', handleFirstInteraction)
+    }
+  }, [hasInteracted, isPlaying])
+
+  const togglePlay = async () => {
+    const audio = audioRef.current
+    if (!audio) return
+
     if (!isPlaying) {
       // Intentar reproducir
-      const audio = audioRef.current
-      if (audio) {
-        audio.play().then(() => {
-          setIsPlaying(true)
-        }).catch((error) => {
-          console.log('El usuario debe interactuar primero')
-          setIsPlaying(false)
-        })
+      try {
+        await audio.play()
+        setIsPlaying(true)
+        setHasInteracted(true)
+        playAttemptedRef.current = true
+        console.log('✅ Música iniciada por el usuario')
+      } catch (error) {
+        console.log('Error al reproducir:', error)
+        setIsPlaying(false)
       }
     } else {
+      audio.pause()
       setIsPlaying(false)
     }
   }
@@ -136,7 +176,21 @@ const MusicPlayer = () => {
         ref={audioRef}
         src="/Sonido.wav"
         preload="auto"
+        loop
         onEnded={() => setIsPlaying(false)}
+        onLoadedData={() => {
+          // Intentar reproducir cuando los datos estén cargados
+          if (audioRef.current && isPlaying && !hasInteracted) {
+            audioRef.current.play()
+              .then(() => {
+                setHasInteracted(true)
+                playAttemptedRef.current = true
+              })
+              .catch(() => {
+                // Silenciosamente fallar, se intentará en la interacción
+              })
+          }
+        }}
       />
 
       {/* Controles de música flotantes */}
