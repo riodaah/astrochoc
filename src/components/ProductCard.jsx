@@ -25,10 +25,16 @@ const ProductCard = ({ onAddToCart }) => {
     id: 'astrochoc-box',
     name: config.product.name,
     price: config.product.price,
+    originalPrice: config.product.originalPrice,
     currency: config.product.currency,
     description: config.product.description,
     includes: config.product.includes,
   }
+
+  // Calcular descuento
+  const discountPercentage = Math.round(
+    ((product.originalPrice - product.price) / product.originalPrice) * 100
+  )
 
   const handleAddToCart = () => {
     addToCart(product, quantity)
@@ -101,22 +107,62 @@ const ProductCard = ({ onAddToCart }) => {
                   />
                 </AnimatePresence>
 
-                {/* Badge "Edición Limitada" */}
+                {/* Badge "OFERTA LIMITADA" */}
                 <motion.div
                   animate={{
-                    rotate: [0, 5, 0],
+                    rotate: [0, 5, -5, 0],
+                    scale: [1, 1.05, 1.05, 1],
                   }}
                   transition={{
                     duration: 2,
                     repeat: Infinity,
                   }}
-                  className="absolute top-4 right-4 bg-cosmic-gold text-cosmic-dark px-4 py-2 rounded-full font-bold text-sm shadow-lg z-10"
+                  className="absolute top-4 right-4 z-10"
                 >
-                  ✨ Edición Limitada
+                  <div className="relative">
+                    {/* Brillo pulsante detrás */}
+                    <motion.div
+                      animate={{
+                        opacity: [0.5, 1, 0.5],
+                        scale: [1, 1.2, 1],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                      }}
+                      className="absolute inset-0 bg-red-500 rounded-full blur-md"
+                    />
+                    {/* Badge principal */}
+                    <div className="relative bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-full font-black text-sm shadow-2xl border-2 border-white/50">
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-300">🔥</span>
+                        <span>OFERTA LIMITADA</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Badge de descuento */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.1, 1],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                  }}
+                  className="absolute top-4 left-4 z-10"
+                >
+                  <div className="bg-gradient-to-br from-red-600 to-red-700 text-white px-4 py-2 rounded-lg font-black text-lg shadow-2xl border-2 border-white">
+                    <div className="text-center">
+                      <div className="text-2xl leading-none">{discountPercentage}%</div>
+                      <div className="text-xs leading-none mt-0.5">DCTO</div>
+                    </div>
+                  </div>
                 </motion.div>
 
                 {/* Indicador de imagen */}
-                <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm z-10">
+                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm z-10">
                   {selectedImage + 1} / {productImages.length}
                 </div>
 
@@ -246,11 +292,59 @@ const ProductCard = ({ onAddToCart }) => {
 
               {/* Precio y cantidad */}
               <div className="border-t border-cosmic-gold/30 pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-white/70">Precio unitario:</span>
-                  <span className="text-3xl font-bold text-gradient font-cinzel">
-                    {formatPrice(product.price)}
-                  </span>
+                {/* Precio con oferta */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-red-600/20 to-red-500/20 rounded-xl border-2 border-red-500/50 relative overflow-hidden">
+                  {/* Efecto de brillo animado */}
+                  <motion.div
+                    animate={{
+                      x: ['-100%', '200%'],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                    className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  />
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <motion.span
+                          animate={{
+                            scale: [1, 1.1, 1],
+                          }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                          }}
+                          className="text-2xl"
+                        >
+                          🔥
+                        </motion.span>
+                        <span className="text-white/90 font-bold">Precio de oferta:</span>
+                      </div>
+                      <div className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-black">
+                        -{discountPercentage}%
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      {/* Precio original tachado */}
+                      <span className="text-xl text-white/50 line-through font-cinzel">
+                        {formatPrice(product.originalPrice)}
+                      </span>
+                      
+                      {/* Precio de oferta */}
+                      <span className="text-4xl font-bold text-gradient font-cinzel">
+                        {formatPrice(product.price)}
+                      </span>
+                    </div>
+                    
+                    <p className="text-xs text-red-300 mt-2 font-semibold">
+                      ⏰ ¡Solo por tiempo limitado!
+                    </p>
+                  </div>
                 </div>
 
                 {/* Selector de cantidad */}

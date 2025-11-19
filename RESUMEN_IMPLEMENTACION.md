@@ -307,3 +307,5 @@ Has recibido una implementación completa de:
 
 *Si tienes dudas, revisa `SETUP_MERCADOPAGO.md` o contacta a hola@astrochoc.cl*
 
+
+

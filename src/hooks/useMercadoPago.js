@@ -40,9 +40,10 @@ export const useMercadoPago = () => {
   /**
    * Crea una preferencia de pago y redirige al checkout
    * @param {Array} items - Array de items del carrito con { id, title, quantity, unit_price }
+   * @param {Object} shippingData - Datos de envío del cliente
    * @returns {Promise<void>}
    */
-  const createCheckout = async (items) => {
+  const createCheckout = async (items, shippingData = null) => {
     setIsLoading(true)
     setError(null)
 
@@ -62,21 +63,42 @@ export const useMercadoPago = () => {
         currency_id: 'CLP',
       }))
 
+      // Preparar datos del pagador si existen
+      const payer = shippingData ? {
+        name: shippingData.name,
+        email: shippingData.email,
+        phone: {
+          number: shippingData.phone.replace(/[^0-9+]/g, ''),
+        },
+        address: {
+          street_name: shippingData.address,
+          city_name: shippingData.comuna,
+          state_name: shippingData.region,
+        },
+      } : null
+
       console.log('🛒 Enviando pedido al backend:', {
         items: formattedItems.length,
         total: formattedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        hasShippingData: !!shippingData,
         backendUrl
       })
 
       // Llamar al backend para crear la preferencia
+      const requestBody = {
+        items: formattedItems,
+      }
+
+      if (payer) {
+        requestBody.payer = payer
+      }
+
       const response = await fetch(`${backendUrl}/api/create-preference`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          items: formattedItems,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {

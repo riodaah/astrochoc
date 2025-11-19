@@ -8,6 +8,7 @@
   "product": {
     "name": "Caja Astrochoc – Edición Tarot",
     "price": 9990,
+    "originalPrice": 15990,
     "currency": "CLP",
     "description": "Pirámide mágica con 3 chocolates sin azúcar ni gluten, carta de tarot al azar y nube protectora.",
     "includes": [
@@ -19,7 +20,11 @@
   },
   "shipping": {
     "estimate": "Despachos entre 2 y 5 días hábiles.",
-    "regions": "Disponible en Región Metropolitana (por ahora)."
+    "regions": "Disponible en Región Metropolitana (por ahora).",
+    "costs": {
+      "RM": 2990,
+      "regiones": 3990
+    }
   },
   "contact": {
     "email": "hola@astrochoc.cl",

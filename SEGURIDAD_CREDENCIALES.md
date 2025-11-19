@@ -259,3 +259,5 @@ No deberías ver credenciales hardcodeadas
 
 ✨ **¡Mantén tus credenciales seguras!** 🔒🌙
 
+
+

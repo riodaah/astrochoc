@@ -39,3 +39,5 @@ Los cambios en esta carpeta requieren reiniciar el servidor de desarrollo.
 
 ✨ **Nota**: Si agregas o cambias archivos aquí, reinicia el servidor con `npm run dev`
 
+
+

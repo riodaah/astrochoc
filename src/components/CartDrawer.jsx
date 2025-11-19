@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '../context/CartContext'
 import useMercadoPago from '../hooks/useMercadoPago'
+import ShippingForm from './ShippingForm'
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const { cartItems, cartCount, updateQuantity, removeFromCart, getTotal } = useCart()
   const { createCheckout, isLoading } = useMercadoPago()
+  const [showShippingForm, setShowShippingForm] = useState(false)
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-CL', {
@@ -14,7 +17,16 @@ const CartDrawer = ({ isOpen, onClose }) => {
     }).format(price)
   }
 
-  const handleCheckout = async () => {
+  const handleProceedToShipping = () => {
+    if (cartItems.length === 0) return
+    setShowShippingForm(true)
+  }
+
+  const handleBackToCart = () => {
+    setShowShippingForm(false)
+  }
+
+  const handleCheckout = async (shippingData) => {
     if (cartItems.length === 0) return
     
     // Preparar items para Mercado Pago
@@ -26,7 +38,16 @@ const CartDrawer = ({ isOpen, onClose }) => {
       price: item.price,
     }))
 
-    await createCheckout(items)
+    // Agregar costo de envío como un item adicional
+    items.push({
+      id: 'shipping',
+      name: `Envío - ${shippingData.region === 'RM' ? 'Región Metropolitana' : 'Otras Regiones'}`,
+      title: 'Costo de envío',
+      quantity: 1,
+      price: shippingData.shippingCost,
+    })
+
+    await createCheckout(items, shippingData)
   }
 
   return (
@@ -74,7 +95,26 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-              {cartItems.length === 0 ? (
+              {showShippingForm ? (
+                /* Formulario de envío */
+                <div>
+                  <motion.button
+                    onClick={handleBackToCart}
+                    whileHover={{ x: -5 }}
+                    className="flex items-center gap-2 text-cosmic-gold hover:text-yellow-400 mb-4 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Volver al carrito
+                  </motion.button>
+                  <ShippingForm 
+                    onSubmit={handleCheckout}
+                    total={getTotal()}
+                    isLoading={isLoading}
+                  />
+                </div>
+              ) : cartItems.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -177,47 +217,35 @@ const CartDrawer = ({ isOpen, onClose }) => {
             </div>
 
             {/* Footer - Checkout */}
-            {cartItems.length > 0 && (
+            {cartItems.length > 0 && !showShippingForm && (
               <div className="p-6 border-t border-cosmic-gold/30 backdrop-blur-glass space-y-4">
                 {/* Total */}
                 <div className="flex items-center justify-between text-xl">
-                  <span className="text-white/80 font-semibold">Total:</span>
+                  <span className="text-white/80 font-semibold">Subtotal:</span>
                   <span className="font-cinzel text-2xl text-gradient">
                     {formatPrice(getTotal())}
                   </span>
                 </div>
 
-                {/* Botón Checkout */}
+                <p className="text-center text-xs text-white/60">
+                  + Costo de envío (se calcula en el siguiente paso)
+                </p>
+
+                {/* Botón Continuar */}
                 <motion.button
-                  onClick={handleCheckout}
-                  disabled={isLoading}
+                  onClick={handleProceedToShipping}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`
+                  className="
                     w-full py-4 rounded-full font-bold text-lg
                     bg-gradient-to-r from-cosmic-gold to-yellow-500
                     text-cosmic-dark
                     shadow-lg hover:shadow-2xl
                     transition-all duration-300
-                    disabled:opacity-50 disabled:cursor-not-allowed
                     flex items-center justify-center gap-2
-                  `}
+                  "
                 >
-                  {isLoading ? (
-                    <>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      >
-                        ⭐
-                      </motion.div>
-                      Procesando...
-                    </>
-                  ) : (
-                    <>
-                      🌙 Finalizar compra con Mercado Pago
-                    </>
-                  )}
+                  📦 Continuar con el envío
                 </motion.button>
 
                 <p className="text-center text-xs text-white/50">
@@ -233,4 +261,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
 }
 
 export default CartDrawer
+
+
 

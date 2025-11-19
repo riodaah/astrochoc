@@ -68,8 +68,8 @@ app.post('/api/create-preference', async (req, res) => {
       
       auto_return: 'approved',
       
-      // Información del pagador (opcional)
-      payer: payer || {},
+      // Información del pagador (opcional pero recomendado)
+      payer: payer || undefined,
       
       // Datos de envío
       shipments: shipments || {
@@ -200,4 +200,6 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
+
 

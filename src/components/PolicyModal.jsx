@@ -247,3 +247,5 @@ const PolicyModal = ({ isOpen, onClose, type }) => {
 
 export default PolicyModal
 
+
+
