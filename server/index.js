@@ -104,34 +104,11 @@ app.post('/api/create-preference', async (req, res) => {
       }
     };
 
-    console.log('📦 Creando preferencia de pago:', {
-      items: items.length,
-      total: items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-      payer: payer ? 'Datos incluidos' : 'Sin datos'
-    });
-
-    // Log de datos del pagador para debug
-    if (payer) {
-      console.log('👤 Datos del pagador:', {
-        name: payer.name,
-        email: payer.email,
-        phone: payer.phone?.number,
-        address: payer.address?.street_name
-      });
-    }
+    console.log('📦 Creando preferencia de pago...');
 
     const response = await preference.create({ body: preferenceData });
 
-    console.log('✅ Preferencia creada:', {
-      id: response.id,
-      init_point: response.init_point ? 'OK' : 'MISSING',
-      sandbox_init_point: response.sandbox_init_point ? 'OK' : 'MISSING',
-      status: response.status || 'N/A',
-      collector_id: response.collector_id || 'N/A'
-    });
-
-    // Log de la respuesta completa (para debug)
-    console.log('📊 Respuesta completa de MP:', JSON.stringify(response, null, 2));
+    console.log('✅ Preferencia creada exitosamente');
 
     res.json({
       id: response.id,
@@ -140,10 +117,9 @@ app.post('/api/create-preference', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error al crear preferencia:', error);
+    console.error('❌ Error al crear preferencia');
     res.status(500).json({
-      error: 'Error al crear la preferencia de pago',
-      details: error.message
+      error: 'Error al crear la preferencia de pago'
     });
   }
 });
@@ -156,7 +132,7 @@ app.post('/api/webhook', async (req, res) => {
   try {
     const { type, data } = req.body;
 
-    console.log('🔔 Webhook recibido:', { type, data });
+    console.log('🔔 Webhook recibido:', type);
 
     // Responder rápidamente a Mercado Pago (importante para no perder notificaciones)
     res.status(200).send('OK');
@@ -164,16 +140,16 @@ app.post('/api/webhook', async (req, res) => {
     // Procesar la notificación de forma asíncrona
     if (type === 'payment') {
       const paymentId = data.id;
-      console.log('💳 Pago recibido:', paymentId);
+      console.log('💳 Procesando pago...');
       
       // Procesar el pago de forma asíncrona (sin bloquear la respuesta)
       processPaymentNotification(paymentId).catch(err => {
-        console.error('❌ Error al procesar pago:', err);
+        console.error('❌ Error al procesar pago');
       });
     }
 
   } catch (error) {
-    console.error('❌ Error en webhook:', error);
+    console.error('❌ Error en webhook');
     res.status(500).send('Error');
   }
 });
@@ -186,12 +162,6 @@ async function processPaymentNotification(paymentId) {
     // Consultar información del pago en Mercado Pago
     const payment = new Payment(client);
     const paymentInfo = await payment.get({ id: paymentId });
-
-    console.log('📊 Información del pago:', {
-      id: paymentInfo.id,
-      status: paymentInfo.status,
-      amount: paymentInfo.transaction_amount
-    });
 
     // Solo enviar emails si el pago fue aprobado
     if (paymentInfo.status === 'approved') {
@@ -217,7 +187,7 @@ async function processPaymentNotification(paymentId) {
 
       // Validar que tengamos email del cliente
       if (!orderData.email) {
-        console.warn('⚠️ No se encontró email del cliente, no se pueden enviar emails');
+        console.warn('⚠️ No se encontró email del cliente');
         return;
       }
 
@@ -228,14 +198,14 @@ async function processPaymentNotification(paymentId) {
       try {
         const customerEmail = customerEmailTemplate(orderData);
         await resend.emails.send({
-          from: 'Astrochoc <onboarding@resend.dev>', // Cambiar cuando tengas dominio verificado
+          from: 'Astrochoc <onboarding@resend.dev>',
           to: orderData.email,
           subject: customerEmail.subject,
           html: customerEmail.html,
         });
-        console.log('✅ Email enviado al cliente:', orderData.email);
+        console.log('✅ Email enviado al cliente');
       } catch (emailError) {
-        console.error('❌ Error al enviar email al cliente:', emailError);
+        console.error('❌ Error al enviar email al cliente');
       }
 
       // 2. Enviar email al administrador
@@ -243,25 +213,25 @@ async function processPaymentNotification(paymentId) {
         try {
           const adminEmailData = adminEmailTemplate(orderData);
           await resend.emails.send({
-            from: 'Astrochoc Notificaciones <onboarding@resend.dev>', // Cambiar cuando tengas dominio verificado
+            from: 'Astrochoc Notificaciones <onboarding@resend.dev>',
             to: adminEmail,
             subject: adminEmailData.subject,
             html: adminEmailData.html,
           });
-          console.log('✅ Email enviado al administrador:', adminEmail);
+          console.log('✅ Email enviado al administrador');
         } catch (emailError) {
-          console.error('❌ Error al enviar email al administrador:', emailError);
+          console.error('❌ Error al enviar email al administrador');
         }
       } else {
-        console.warn('⚠️ No se configuró ADMIN_EMAIL, no se envió email al administrador');
+        console.warn('⚠️ ADMIN_EMAIL no configurado');
       }
 
     } else {
-      console.log(`⏳ Pago con estado "${paymentInfo.status}", no se envían emails`);
+      console.log(`⏳ Pago con estado "${paymentInfo.status}"`);
     }
 
   } catch (error) {
-    console.error('❌ Error al procesar notificación de pago:', error);
+    console.error('❌ Error al procesar notificación');
     throw error;
   }
 }

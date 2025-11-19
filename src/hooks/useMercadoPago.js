@@ -19,11 +19,7 @@ export const useMercadoPago = () => {
   const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY || config.mercadoPago.publicKey
   const backendUrl = import.meta.env.VITE_BACKEND_URL || config.mercadoPago.checkoutUrl
 
-  // DEBUG: Ver qué credenciales se están usando
-  console.log('🔑 Credenciales Mercado Pago:')
-  console.log('Public Key:', publicKey?.substring(0, 15) + '...')
-  console.log('Backend URL:', backendUrl)
-  console.log('Tipo:', publicKey?.startsWith('TEST') ? 'PRUEBA' : publicKey?.startsWith('APP_USR') ? 'PRODUCCIÓN' : 'NO CONFIGURADO')
+  // Credenciales cargadas (sin exponer en consola por seguridad)
 
   useEffect(() => {
     // Cargar el SDK de Mercado Pago
@@ -85,12 +81,8 @@ export const useMercadoPago = () => {
         },
       } : null
 
-      console.log('🛒 Enviando pedido al backend:', {
-        items: formattedItems.length,
-        total: formattedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        hasShippingData: !!shippingData,
-        backendUrl
-      })
+      // Enviando pedido al backend
+      console.log('🛒 Procesando pedido...')
 
       // Llamar al backend para crear la preferencia
       const requestBody = {
@@ -109,55 +101,26 @@ export const useMercadoPago = () => {
         body: JSON.stringify(requestBody),
       })
 
-      console.log('📡 Respuesta del backend:', {
-        status: response.status,
-        ok: response.ok
-      })
-
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('❌ Error del backend:', errorData)
         throw new Error(errorData.error || 'Error al crear la preferencia de pago')
       }
 
       const data = await response.json()
-      console.log('✅ Preferencia creada:', {
-        id: data.id,
-        init_point: data.init_point,
-        sandbox_init_point: data.sandbox_init_point
-      })
+      console.log('✅ Redirigiendo a Mercado Pago...')
 
       // Redirigir al checkout de Mercado Pago
       // Usar sandbox_init_point en desarrollo, init_point en producción
       const checkoutUrl = data.init_point || data.sandbox_init_point
       
       if (checkoutUrl) {
-        console.log('🚀 Redirigiendo a Mercado Pago...')
-        console.log('🔗 URL de checkout:', checkoutUrl)
-        
-        // Pequeño delay para ver los logs antes de redirigir
-        setTimeout(() => {
-          window.location.href = checkoutUrl
-        }, 500)
+        window.location.href = checkoutUrl
       } else {
-        console.error('❌ No se recibió URL de checkout. Respuesta:', data)
         throw new Error('No se recibió la URL de checkout')
       }
     } catch (err) {
-      console.error('❌ Error en checkout:', err)
       setError(err.message || 'Error al procesar el pago')
-      
-      // Mostrar mensaje de error al usuario
-      if (err.message.includes('Failed to fetch')) {
-        alert('🌟 No se pudo conectar con el servidor de pagos.\n\n' +
-              'Asegúrate de que:\n' +
-              '1. El servidor backend esté corriendo (npm run dev en /server)\n' +
-              '2. VITE_BACKEND_URL esté configurado correctamente en .env\n' +
-              '3. Las credenciales de Mercado Pago sean válidas\n\n' +
-              'Ver consola para más detalles.')
-      } else {
-        alert(`❌ Error al procesar el pago:\n\n${err.message}\n\nPor favor, intenta nuevamente.`)
-      }
+      alert(`❌ Error al procesar el pago:\n\n${err.message}\n\nPor favor, intenta nuevamente.`)
     } finally {
       setIsLoading(false)
     }
