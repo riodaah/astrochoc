@@ -19,6 +19,12 @@ export const useMercadoPago = () => {
   const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY || config.mercadoPago.publicKey
   const backendUrl = import.meta.env.VITE_BACKEND_URL || config.mercadoPago.checkoutUrl
 
+  // DEBUG: Ver qué credenciales se están usando
+  console.log('🔑 Credenciales Mercado Pago:')
+  console.log('Public Key:', publicKey?.substring(0, 15) + '...')
+  console.log('Backend URL:', backendUrl)
+  console.log('Tipo:', publicKey?.startsWith('TEST') ? 'PRUEBA' : publicKey?.startsWith('APP_USR') ? 'PRODUCCIÓN' : 'NO CONFIGURADO')
+
   useEffect(() => {
     // Cargar el SDK de Mercado Pago
     const script = document.createElement('script')
