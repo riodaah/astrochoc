@@ -97,10 +97,14 @@ app.post('/api/create-preference', async (req, res) => {
       // Notificación
       notification_url: `${process.env.BACKEND_URL}/api/webhook`,
       
-      // Metadata
+      // Metadata (incluir email del formulario para el webhook)
       metadata: {
         platform: 'astrochoc-web',
-        items_count: items.reduce((sum, item) => sum + item.quantity, 0)
+        items_count: items.reduce((sum, item) => sum + item.quantity, 0),
+        customer_email: payer?.email || '', // Email del formulario
+        customer_name: payer?.name || '',
+        customer_phone: payer?.phone?.number || '',
+        shipping_address: payer?.address?.street_name || ''
       }
     };
 
@@ -168,18 +172,29 @@ async function processPaymentNotification(paymentId) {
       console.log('✅ Pago aprobado, preparando emails...');
 
       // Extraer información del pago
+      // IMPORTANTE: Usar metadata para obtener los datos del formulario (no del payer de MP)
+      const metadata = paymentInfo.metadata || {};
+      
       const orderData = {
         paymentId: paymentInfo.id,
         orderNumber: paymentInfo.external_reference || `MP-${paymentInfo.id}`,
-        customerName: paymentInfo.payer?.first_name 
-          ? `${paymentInfo.payer.first_name} ${paymentInfo.payer.last_name || ''}`
-          : paymentInfo.payer?.email || 'Cliente',
-        email: paymentInfo.payer?.email || '',
-        phone: paymentInfo.payer?.phone?.number || '',
+        
+        // Priorizar datos del formulario (metadata) sobre datos de Mercado Pago
+        customerName: metadata.customer_name || 
+          (paymentInfo.payer?.first_name 
+            ? `${paymentInfo.payer.first_name} ${paymentInfo.payer.last_name || ''}`
+            : 'Cliente'),
+        
+        email: metadata.customer_email || paymentInfo.payer?.email || '',
+        phone: metadata.customer_phone || paymentInfo.payer?.phone?.number || '',
+        
         items: paymentInfo.additional_info?.items || [],
         total: paymentInfo.transaction_amount,
+        
         shippingAddress: {
-          street: paymentInfo.payer?.address?.street_name || 'Dirección no especificada',
+          street: metadata.shipping_address || 
+            paymentInfo.payer?.address?.street_name || 
+            'Dirección no especificada',
           city: paymentInfo.payer?.address?.city_name || '',
           state: paymentInfo.payer?.address?.state_name || '',
         },
