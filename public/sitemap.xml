@@ -5,9 +5,19 @@
   <!-- Página Principal -->
   <url>
     <loc>https://astrochoc.cl/</loc>
-    <lastmod>2025-11-14</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2025-11-19</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://astrochoc.cl/Foto-producto-1.jpeg</image:loc>
+      <image:title>Caja Astrochoc - Chocolates sin azúcar + Tarot</image:title>
+      <image:caption>Caja mágica con 3 chocolates sin azúcar ni gluten, carta de tarot y nube protectora</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://astrochoc.cl/box-open.png</image:loc>
+      <image:title>Caja Astrochoc abierta</image:title>
+      <image:caption>Interior de la caja Astrochoc mostrando chocolates, carta de tarot y nube protectora</image:caption>
+    </image:image>
     <image:image>
       <image:loc>https://astrochoc.cl/Logo.jpeg</image:loc>
       <image:title>Astrochoc Logo</image:title>
@@ -18,7 +28,7 @@
   <!-- Página de Éxito -->
   <url>
     <loc>https://astrochoc.cl/success</loc>
-    <lastmod>2025-11-14</lastmod>
+    <lastmod>2025-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -26,7 +36,7 @@
   <!-- Página de Pago Pendiente -->
   <url>
     <loc>https://astrochoc.cl/pending</loc>
-    <lastmod>2025-11-14</lastmod>
+    <lastmod>2025-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -34,7 +44,7 @@
   <!-- Página de Fallo -->
   <url>
     <loc>https://astrochoc.cl/failure</loc>
-    <lastmod>2025-11-14</lastmod>
+    <lastmod>2025-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
