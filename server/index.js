@@ -106,12 +106,32 @@ app.post('/api/create-preference', async (req, res) => {
 
     console.log('📦 Creando preferencia de pago:', {
       items: items.length,
-      total: items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+      total: items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+      payer: payer ? 'Datos incluidos' : 'Sin datos'
     });
+
+    // Log de datos del pagador para debug
+    if (payer) {
+      console.log('👤 Datos del pagador:', {
+        name: payer.name,
+        email: payer.email,
+        phone: payer.phone?.number,
+        address: payer.address?.street_name
+      });
+    }
 
     const response = await preference.create({ body: preferenceData });
 
-    console.log('✅ Preferencia creada:', response.id);
+    console.log('✅ Preferencia creada:', {
+      id: response.id,
+      init_point: response.init_point ? 'OK' : 'MISSING',
+      sandbox_init_point: response.sandbox_init_point ? 'OK' : 'MISSING',
+      status: response.status || 'N/A',
+      collector_id: response.collector_id || 'N/A'
+    });
+
+    // Log de la respuesta completa (para debug)
+    console.log('📊 Respuesta completa de MP:', JSON.stringify(response, null, 2));
 
     res.json({
       id: response.id,

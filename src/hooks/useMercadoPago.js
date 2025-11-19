@@ -120,13 +120,23 @@ export const useMercadoPago = () => {
         body: JSON.stringify(requestBody),
       })
 
+      console.log('📡 Respuesta del backend:', {
+        status: response.status,
+        ok: response.ok
+      })
+
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('❌ Error del backend:', errorData)
         throw new Error(errorData.error || 'Error al crear la preferencia de pago')
       }
 
       const data = await response.json()
-      console.log('✅ Preferencia creada:', data.id)
+      console.log('✅ Preferencia creada:', {
+        id: data.id,
+        init_point: data.init_point,
+        sandbox_init_point: data.sandbox_init_point
+      })
 
       // Redirigir al checkout de Mercado Pago
       // Usar sandbox_init_point en desarrollo, init_point en producción
@@ -134,8 +144,14 @@ export const useMercadoPago = () => {
       
       if (checkoutUrl) {
         console.log('🚀 Redirigiendo a Mercado Pago...')
-        window.location.href = checkoutUrl
+        console.log('🔗 URL de checkout:', checkoutUrl)
+        
+        // Pequeño delay para ver los logs antes de redirigir
+        setTimeout(() => {
+          window.location.href = checkoutUrl
+        }, 500)
       } else {
+        console.error('❌ No se recibió URL de checkout. Respuesta:', data)
         throw new Error('No se recibió la URL de checkout')
       }
     } catch (err) {
