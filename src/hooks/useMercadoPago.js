@@ -64,16 +64,29 @@ export const useMercadoPago = () => {
       }))
 
       // Preparar datos del pagador si existen
+      // Dividir nombre en first_name y surname si es posible
+      let firstName = shippingData?.name || ''
+      let surname = ''
+      
+      if (shippingData?.name) {
+        const nameParts = shippingData.name.trim().split(' ')
+        if (nameParts.length > 1) {
+          firstName = nameParts[0]
+          surname = nameParts.slice(1).join(' ')
+        }
+      }
+
       const payer = shippingData ? {
-        name: shippingData.name,
         email: shippingData.email,
+        first_name: firstName,
+        last_name: surname || firstName, // Si no hay apellido, usar el nombre
         phone: {
-          number: shippingData.phone.replace(/[^0-9+]/g, ''),
+          area_code: '',
+          number: String(shippingData.phone).replace(/[^0-9]/g, ''), // Solo números
         },
         address: {
           street_name: shippingData.address,
-          city_name: shippingData.comuna,
-          state_name: shippingData.region,
+          zip_code: '', // Chile no siempre requiere código postal
         },
       } : null
 
