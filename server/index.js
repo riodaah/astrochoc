@@ -1,14 +1,20 @@
 /**
  * Backend para Astrochoc - Integración con Mercado Pago
- * Este servidor maneja la creación de preferencias de pago
+ * Este servidor maneja la creación de preferencias de pago y envío de emails
  */
 
 import express from 'express';
 import cors from 'cors';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import { customerEmailTemplate } from './emails/customerEmail.js';
+import { adminEmailTemplate } from './emails/adminEmail.js';
 
 dotenv.config();
+
+// Configurar Resend para envío de emails
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -132,7 +138,7 @@ app.post('/api/webhook', async (req, res) => {
 
     console.log('🔔 Webhook recibido:', { type, data });
 
-    // Responder rápidamente a Mercado Pago
+    // Responder rápidamente a Mercado Pago (importante para no perder notificaciones)
     res.status(200).send('OK');
 
     // Procesar la notificación de forma asíncrona
@@ -140,11 +146,10 @@ app.post('/api/webhook', async (req, res) => {
       const paymentId = data.id;
       console.log('💳 Pago recibido:', paymentId);
       
-      // Aquí puedes:
-      // 1. Consultar el estado del pago
-      // 2. Actualizar tu base de datos
-      // 3. Enviar emails de confirmación
-      // 4. Preparar el pedido para envío
+      // Procesar el pago de forma asíncrona (sin bloquear la respuesta)
+      processPaymentNotification(paymentId).catch(err => {
+        console.error('❌ Error al procesar pago:', err);
+      });
     }
 
   } catch (error) {
@@ -152,6 +157,94 @@ app.post('/api/webhook', async (req, res) => {
     res.status(500).send('Error');
   }
 });
+
+/**
+ * Procesar notificación de pago y enviar emails
+ */
+async function processPaymentNotification(paymentId) {
+  try {
+    // Consultar información del pago en Mercado Pago
+    const payment = new Payment(client);
+    const paymentInfo = await payment.get({ id: paymentId });
+
+    console.log('📊 Información del pago:', {
+      id: paymentInfo.id,
+      status: paymentInfo.status,
+      amount: paymentInfo.transaction_amount
+    });
+
+    // Solo enviar emails si el pago fue aprobado
+    if (paymentInfo.status === 'approved') {
+      console.log('✅ Pago aprobado, preparando emails...');
+
+      // Extraer información del pago
+      const orderData = {
+        paymentId: paymentInfo.id,
+        orderNumber: paymentInfo.external_reference || `MP-${paymentInfo.id}`,
+        customerName: paymentInfo.payer?.first_name 
+          ? `${paymentInfo.payer.first_name} ${paymentInfo.payer.last_name || ''}`
+          : paymentInfo.payer?.email || 'Cliente',
+        email: paymentInfo.payer?.email || '',
+        phone: paymentInfo.payer?.phone?.number || '',
+        items: paymentInfo.additional_info?.items || [],
+        total: paymentInfo.transaction_amount,
+        shippingAddress: {
+          street: paymentInfo.payer?.address?.street_name || 'Dirección no especificada',
+          city: paymentInfo.payer?.address?.city_name || '',
+          state: paymentInfo.payer?.address?.state_name || '',
+        },
+      };
+
+      // Validar que tengamos email del cliente
+      if (!orderData.email) {
+        console.warn('⚠️ No se encontró email del cliente, no se pueden enviar emails');
+        return;
+      }
+
+      // Email del administrador desde variable de entorno
+      const adminEmail = process.env.ADMIN_EMAIL;
+
+      // 1. Enviar email al cliente
+      try {
+        const customerEmail = customerEmailTemplate(orderData);
+        await resend.emails.send({
+          from: 'Astrochoc <onboarding@resend.dev>', // Cambiar cuando tengas dominio verificado
+          to: orderData.email,
+          subject: customerEmail.subject,
+          html: customerEmail.html,
+        });
+        console.log('✅ Email enviado al cliente:', orderData.email);
+      } catch (emailError) {
+        console.error('❌ Error al enviar email al cliente:', emailError);
+      }
+
+      // 2. Enviar email al administrador
+      if (adminEmail) {
+        try {
+          const adminEmailData = adminEmailTemplate(orderData);
+          await resend.emails.send({
+            from: 'Astrochoc Notificaciones <onboarding@resend.dev>', // Cambiar cuando tengas dominio verificado
+            to: adminEmail,
+            subject: adminEmailData.subject,
+            html: adminEmailData.html,
+          });
+          console.log('✅ Email enviado al administrador:', adminEmail);
+        } catch (emailError) {
+          console.error('❌ Error al enviar email al administrador:', emailError);
+        }
+      } else {
+        console.warn('⚠️ No se configuró ADMIN_EMAIL, no se envió email al administrador');
+      }
+
+    } else {
+      console.log(`⏳ Pago con estado "${paymentInfo.status}", no se envían emails`);
+    }
+
+  } catch (error) {
+    console.error('❌ Error al procesar notificación de pago:', error);
+    throw error;
+  }
+}
 
 /**
  * Endpoint para consultar estado de pago
